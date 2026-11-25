@@ -1,0 +1,32 @@
+name: Review checklist
+
+# Secure Development Policy, section 4: the person merging confirms they read and
+# understood every change. This check stays red until the box is ticked.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  review-checklist:
+    name: Review checklist
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the review box is ticked
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          python3 - <<'EOF'
+          import os, re, sys
+
+          body = os.environ.get("PR_BODY") or ""
+          box = "I have read and understood every change"
+          if not re.search(r"^\s*- \[[xX]\] " + re.escape(box), body, re.M):
+              print("Review checklist incomplete:")
+              print("  - Tick: I have read and understood every change in this pull request, including any AI-written code")
+              print("\nEdit the pull request description to tick the box; this check reruns automatically.")
+              sys.exit(1)
+          print("Review checklist complete: a person confirmed they read and understood every change.")
+          EOF
